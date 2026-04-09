@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Search, Trophy, Medal, CalendarDays } from 'lucide-react'
+import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
 const myAchievements = [
   { id: 1, title: 'Inter-College Debate Runner-Up', category: 'Leadership', date: '2026-02-18', level: 'City', points: 22, status: 'Verified', organizer: 'City Youth Forum' },
@@ -35,6 +36,28 @@ function StudentAchievements({ mode = 'track', student }) {
   const totalPoints = myAchievements.reduce((sum, item) => sum + item.points, 0)
   const verifiedAchievements = myAchievements.filter((item) => item.status === 'Verified')
   const showcaseItems = [...verifiedAchievements].sort((first, second) => second.points - first.points)
+
+  const chartSource = mode === 'track' ? filtered : showcaseItems
+
+  const categoryChartData = useMemo(() => {
+    const totals = chartSource.reduce((accumulator, item) => {
+      accumulator[item.category] = (accumulator[item.category] || 0) + item.points
+      return accumulator
+    }, {})
+
+    return Object.entries(totals).map(([name, points]) => ({ name, points }))
+  }, [chartSource])
+
+  const statusChartData = useMemo(() => {
+    const totals = chartSource.reduce((accumulator, item) => {
+      accumulator[item.status] = (accumulator[item.status] || 0) + 1
+      return accumulator
+    }, {})
+
+    return Object.entries(totals).map(([name, value]) => ({ name, value }))
+  }, [chartSource])
+
+  const chartPalette = ['#4F46E5', '#0EA5E9', '#16A34A', '#EA580C', '#D946EF', '#F59E0B']
 
   return (
     <div className="animate-in">
@@ -87,6 +110,47 @@ function StudentAchievements({ mode = 'track', student }) {
           <div className="summary-card-label">Categories Participated</div>
           <div className="summary-card-value">{new Set(myAchievements.map((item) => item.category)).size}</div>
         </div>
+      </div>
+
+      <div className="charts-grid" style={{ marginBottom: '20px' }}>
+        <section className="table-card chart-panel">
+          <div className="table-header">
+            <h3 className="table-title">Points by Category</h3>
+          </div>
+          <div className="chart-canvas">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={categoryChartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
+                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} />
+                <Tooltip />
+                <Bar dataKey="points" radius={[6, 6, 0, 0]}>
+                  {categoryChartData.map((entry, index) => (
+                    <Cell key={`category-${entry.name}`} fill={chartPalette[index % chartPalette.length]} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </section>
+
+        <section className="table-card chart-panel">
+          <div className="table-header">
+            <h3 className="table-title">Records by Status</h3>
+          </div>
+          <div className="chart-canvas">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={statusChartData} dataKey="value" nameKey="name" innerRadius={45} outerRadius={80} paddingAngle={4}>
+                  {statusChartData.map((entry, index) => (
+                    <Cell key={`status-${entry.name}`} fill={chartPalette[index % chartPalette.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </section>
       </div>
 
       {mode === 'track' && (

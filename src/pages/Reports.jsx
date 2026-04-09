@@ -1,128 +1,127 @@
-import { useState } from 'react'
-import { Download, Filter, Eye, Edit, Trash2, ChevronLeft, ChevronRight, FileSpreadsheet } from 'lucide-react'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
-import { chartTooltipStyle } from '../utils/chartTooltip'
+import { useEffect, useMemo, useState } from 'react'
+import { ChevronLeft, ChevronRight, Download, Filter, Search } from 'lucide-react'
+import { Bar, BarChart, CartesianGrid, Cell, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 
 const reportsData = [
-  { id: 1, studentId: 'STU-001', student: 'Emily Chen', achievement: 'Science Fair Winner', category: 'Academic', department: 'Science', date: '2024-01-15', status: 'Approved' },
-  { id: 2, studentId: 'STU-002', student: 'Michael Brown', achievement: 'Basketball Championship', category: 'Sports', department: 'Athletics', date: '2024-01-14', status: 'Approved' },
-  { id: 3, studentId: 'STU-003', student: 'Sarah Wilson', achievement: 'Art Exhibition', category: 'Arts', department: 'Arts', date: '2024-01-13', status: 'Pending' },
-  { id: 4, studentId: 'STU-004', student: 'James Lee', achievement: 'Student Council President', category: 'Leadership', department: 'Student Council', date: '2024-01-12', status: 'Approved' },
-  { id: 5, studentId: 'STU-005', student: 'Anna Garcia', achievement: 'Community Service Award', category: 'Community', department: 'Community Service', date: '2024-01-11', status: 'Approved' },
-  { id: 6, studentId: 'STU-006', student: 'David Kim', achievement: 'Math Olympiad', category: 'Academic', department: 'Mathematics', date: '2024-01-10', status: 'Approved' },
-  { id: 7, studentId: 'STU-007', student: 'Jessica Taylor', achievement: 'Swimming Competition', category: 'Sports', department: 'Athletics', date: '2024-01-09', status: 'Pending' },
-  { id: 8, studentId: 'STU-008', student: 'Robert Martinez', achievement: 'Music Concert', category: 'Arts', department: 'Music', date: '2024-01-08', status: 'Approved' },
-  { id: 9, studentId: 'STU-009', student: 'Lisa Anderson', achievement: 'Debate Championship', category: 'Leadership', department: 'Debate Club', date: '2024-01-07', status: 'Approved' },
-  { id: 10, studentId: 'STU-010', student: 'William Thomas', achievement: 'Volunteer Program', category: 'Community', department: 'Community Service', date: '2024-01-06', status: 'Approved' },
-]
-
-const monthlyReportData = [
-  { month: 'Jan', academic: 45, sports: 32, arts: 25, leadership: 18, community: 15 },
-  { month: 'Feb', academic: 52, sports: 38, arts: 28, leadership: 22, community: 18 },
-  { month: 'Mar', academic: 48, sports: 42, arts: 35, leadership: 25, community: 20 },
-  { month: 'Apr', academic: 55, sports: 35, arts: 30, leadership: 28, community: 22 },
-  { month: 'May', academic: 60, sports: 48, arts: 32, leadership: 30, community: 25 },
-  { month: 'Jun', academic: 58, sports: 52, arts: 38, leadership: 32, community: 28 },
+  { id: 1, studentId: 'STU-001', student: 'Emily Chen', achievement: 'Science Fair Winner', category: 'Academic', department: 'Science', date: '2026-03-15', status: 'Approved' },
+  { id: 2, studentId: 'STU-002', student: 'Michael Brown', achievement: 'Basketball Championship', category: 'Sports', department: 'Athletics', date: '2026-03-14', status: 'Approved' },
+  { id: 3, studentId: 'STU-003', student: 'Sarah Wilson', achievement: 'Art Exhibition', category: 'Arts', department: 'Arts', date: '2026-03-13', status: 'Pending' },
+  { id: 4, studentId: 'STU-004', student: 'James Lee', achievement: 'Student Council President', category: 'Leadership', department: 'Student Council', date: '2026-03-12', status: 'Approved' },
+  { id: 5, studentId: 'STU-005', student: 'Anna Garcia', achievement: 'Community Service Award', category: 'Community', department: 'Community Service', date: '2026-03-11', status: 'Approved' },
+  { id: 6, studentId: 'STU-006', student: 'David Kim', achievement: 'Math Olympiad', category: 'Academic', department: 'Mathematics', date: '2026-03-10', status: 'Approved' },
+  { id: 7, studentId: 'STU-007', student: 'Jessica Taylor', achievement: 'Swimming Competition', category: 'Sports', department: 'Athletics', date: '2026-03-09', status: 'Pending' },
+  { id: 8, studentId: 'STU-008', student: 'Robert Martinez', achievement: 'Music Concert', category: 'Arts', department: 'Music', date: '2026-03-08', status: 'Approved' },
+  { id: 9, studentId: 'STU-009', student: 'Lisa Anderson', achievement: 'Debate Championship', category: 'Leadership', department: 'Debate Club', date: '2026-03-07', status: 'Approved' },
+  { id: 10, studentId: 'STU-010', student: 'William Thomas', achievement: 'Volunteer Program', category: 'Community', department: 'Community Service', date: '2026-03-06', status: 'Approved' },
 ]
 
 function Reports() {
+  const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('all')
   const [statusFilter, setStatusFilter] = useState('all')
-  const [dateFrom, setDateFrom] = useState('')
-  const [dateTo, setDateTo] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
+
   const itemsPerPage = 5
 
-  const filteredData = reportsData.filter(item => {
-    if (categoryFilter !== 'all' && item.category.toLowerCase() !== categoryFilter) return false
-    if (statusFilter !== 'all' && item.status.toLowerCase() !== statusFilter) return false
-    if (dateFrom && item.date < dateFrom) return false
-    if (dateTo && item.date > dateTo) return false
-    return true
-  })
+  const filteredData = useMemo(() => {
+    return reportsData.filter((item) => {
+      const bySearch =
+        item.student.toLowerCase().includes(search.toLowerCase()) ||
+        item.studentId.toLowerCase().includes(search.toLowerCase()) ||
+        item.achievement.toLowerCase().includes(search.toLowerCase())
+      const byCategory = categoryFilter === 'all' || item.category.toLowerCase() === categoryFilter
+      const byStatus = statusFilter === 'all' || item.status.toLowerCase() === statusFilter
+      return bySearch && byCategory && byStatus
+    })
+  }, [search, categoryFilter, statusFilter])
 
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage)
-  const paginatedData = filteredData.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  )
+  const totalPages = Math.max(1, Math.ceil(filteredData.length / itemsPerPage))
+  const paginatedData = filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
 
-  const exportToCSV = () => {
-    const headers = ['Student ID', 'Student Name', 'Achievement', 'Category', 'Department', 'Date', 'Status']
-    const csvContent = [
-      headers.join(','),
-      ...filteredData.map(row => 
-        [row.studentId, row.student, row.achievement, row.category, row.department, row.date, row.status].join(',')
-      )
-    ].join('\n')
-
-    const blob = new Blob([csvContent], { type: 'text/csv' })
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'achievements_report.csv'
-    a.click()
-    window.URL.revokeObjectURL(url)
-  }
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [search, categoryFilter, statusFilter])
 
   const summaryStats = [
-    { label: 'Total Records', value: filteredData.length, color: '#6366F1' },
-    { label: 'Approved', value: filteredData.filter(r => r.status === 'Approved').length, color: '#10B981' },
-    { label: 'Pending', value: filteredData.filter(r => r.status === 'Pending').length, color: '#F59E0B' },
-    { label: 'Categories', value: [...new Set(filteredData.map(r => r.category))].length, color: '#9333EA' },
+    { label: 'Filtered Records', value: filteredData.length },
+    { label: 'Approved', value: filteredData.filter((item) => item.status === 'Approved').length },
+    { label: 'Pending', value: filteredData.filter((item) => item.status === 'Pending').length },
+    { label: 'Departments', value: new Set(filteredData.map((item) => item.department)).size },
   ]
+
+  const categoryTotals = useMemo(() => {
+    const totals = filteredData.reduce((accumulator, item) => {
+      accumulator[item.category] = (accumulator[item.category] || 0) + 1
+      return accumulator
+    }, {})
+
+    return Object.entries(totals).map(([category, records]) => ({ category, records }))
+  }, [filteredData])
+
+  const statusByCategory = useMemo(() => {
+    const grouped = filteredData.reduce((accumulator, item) => {
+      if (!accumulator[item.category]) {
+        accumulator[item.category] = { category: item.category, Approved: 0, Pending: 0 }
+      }
+
+      accumulator[item.category][item.status] += 1
+      return accumulator
+    }, {})
+
+    return Object.values(grouped)
+  }, [filteredData])
+
+  const categoryColors = ['#4F46E5', '#06B6D4', '#16A34A', '#EA580C', '#D946EF', '#F59E0B']
+
+  const groupedCategoryRows = useMemo(() => {
+    const grouped = filteredData.reduce((accumulator, item) => {
+      if (!accumulator[item.category]) {
+        accumulator[item.category] = []
+      }
+      accumulator[item.category].push(item)
+      return accumulator
+    }, {})
+
+    return Object.entries(grouped)
+      .map(([category, rows]) => ({ category, rows }))
+      .sort((first, second) => second.rows.length - first.rows.length)
+  }, [filteredData])
+
+  const exportCsv = () => {
+    const headers = ['Student ID', 'Student', 'Achievement', 'Category', 'Department', 'Date', 'Status']
+    const body = filteredData.map((row) =>
+      [row.studentId, row.student, row.achievement, row.category, row.department, row.date, row.status].join(',')
+    )
+    const blob = new Blob([[headers.join(','), ...body].join('\n')], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = 'verification-report.csv'
+    anchor.click()
+    URL.revokeObjectURL(url)
+  }
 
   return (
     <div className="animate-in">
-      {/* Summary Cards */}
       <div className="summary-grid">
-        {summaryStats.map((stat, index) => (
-          <div className="summary-card" key={index}>
-            <div className="summary-card-label">{stat.label}</div>
-            <div className="summary-card-value" style={{ 
-              background: `linear-gradient(135deg, ${stat.color}, ${stat.color}99)`,
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text'
-            }}>{stat.value}</div>
-          </div>
+        {summaryStats.map((stat) => (
+          <section className="summary-card" key={stat.label}>
+            <p className="summary-card-label">{stat.label}</p>
+            <p className="summary-card-value">{stat.value}</p>
+          </section>
         ))}
       </div>
 
-      {/* Chart */}
-      <div className="chart-card animate-in" style={{ animationDelay: '0.1s', marginBottom: '24px' }}>
-        <div className="chart-card-header">
-          <h3 className="chart-card-title">Monthly Achievement Distribution</h3>
-        </div>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={monthlyReportData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
-            <XAxis dataKey="month" stroke="#64748B" fontSize={12} axisLine={false} tickLine={false} />
-            <YAxis stroke="#64748B" fontSize={12} axisLine={false} tickLine={false} />
-            <Tooltip 
-              contentStyle={{ 
-                ...chartTooltipStyle,
-                borderRadius: '12px',
-              }}
-            />
-            <Legend iconType="circle" iconSize={8} />
-            <Bar dataKey="academic" fill="#6366F1" name="Academic" radius={[6, 6, 0, 0]} />
-            <Bar dataKey="sports" fill="#10B981" name="Sports" radius={[6, 6, 0, 0]} />
-            <Bar dataKey="arts" fill="#F59E0B" name="Arts" radius={[6, 6, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-
-      {/* Filters */}
       <div className="filters-section">
+        <div className="search-box report-search">
+          <Search size={16} />
+          <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search student, ID, or achievement" />
+        </div>
+
         <div className="filter-group">
-          <Filter size={18} color="#64748B" />
-          <select 
-            className="filter-select" 
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-          >
-            <option value="all">All Categories</option>
+          <Filter size={16} />
+          <select className="filter-select" value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)}>
+            <option value="all">All categories</option>
             <option value="academic">Academic</option>
             <option value="sports">Sports</option>
             <option value="arts">Arts</option>
@@ -130,108 +129,98 @@ function Reports() {
             <option value="community">Community</option>
           </select>
         </div>
-        
-        <div className="filter-group">
-          <select 
-            className="filter-select" 
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-          >
-            <option value="all">All Status</option>
-            <option value="approved">Approved</option>
-            <option value="pending">Pending</option>
-          </select>
-        </div>
-        
-        <div className="filter-group">
-          <input 
-            type="date" 
-            className="date-input"
-            value={dateFrom}
-            onChange={(e) => setDateFrom(e.target.value)}
-            placeholder="From Date"
-          />
-        </div>
-        
-        <div className="filter-group">
-          <input 
-            type="date" 
-            className="date-input"
-            value={dateTo}
-            onChange={(e) => setDateTo(e.target.value)}
-            placeholder="To Date"
-          />
-        </div>
-        
-        <button className="btn btn-primary" onClick={exportToCSV}>
-          <Download size={18} />
+
+        <select className="filter-select" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+          <option value="all">All status</option>
+          <option value="approved">Approved</option>
+          <option value="pending">Pending</option>
+        </select>
+
+        <button className="btn btn-primary" onClick={exportCsv}>
+          <Download size={16} />
           Export CSV
         </button>
       </div>
 
-      {/* Table */}
-      <div className="table-card animate-in" style={{ animationDelay: '0.2s' }}>
+      <div className="charts-grid" style={{ marginBottom: '16px' }}>
+        <section className="table-card chart-panel">
+          <div className="table-header">
+            <h3 className="table-title">Records Per Category</h3>
+          </div>
+          <div className="chart-canvas">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={categoryTotals}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
+                <XAxis dataKey="category" tick={{ fontSize: 12 }} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+                <Tooltip />
+                <Bar dataKey="records" radius={[6, 6, 0, 0]}>
+                  {categoryTotals.map((entry, index) => (
+                    <Cell key={`${entry.category}-bar`} fill={categoryColors[index % categoryColors.length]} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </section>
+
+        <section className="table-card chart-panel">
+          <div className="table-header">
+            <h3 className="table-title">Category Status Breakdown</h3>
+          </div>
+          <div className="chart-canvas">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={statusByCategory}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
+                <XAxis dataKey="category" tick={{ fontSize: 12 }} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="Approved" stackId="status" fill="#16A34A" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="Pending" stackId="status" fill="#F59E0B" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </section>
+      </div>
+
+      <section className="table-card">
         <div className="table-header">
-          <h3 className="table-title">Achievement Reports</h3>
+          <h3 className="table-title">Verification Report Table</h3>
         </div>
-        
+
         <div className="table-container">
           <table>
             <thead>
               <tr>
-                <th>Student ID</th>
-                <th>Student Name</th>
+                <th>Student</th>
                 <th>Achievement</th>
                 <th>Category</th>
                 <th>Department</th>
                 <th>Date</th>
                 <th>Status</th>
-                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {paginatedData.map((row) => (
                 <tr key={row.id}>
-                  <td style={{ fontFamily: 'monospace', fontWeight: '600', color: '#6366F1' }}>{row.studentId}</td>
                   <td>
                     <div className="table-user">
-                      <div className="table-user-avatar" style={{ background: 'linear-gradient(135deg, #6366F1, #818CF8)' }}>
-                        {row.student.split(' ').map(n => n[0]).join('')}
-                      </div>
+                      <div className="table-user-avatar">{row.student.split(' ').map((word) => word[0]).join('')}</div>
                       <div className="table-user-info">
                         <h4>{row.student}</h4>
+                        <p>{row.studentId}</p>
                       </div>
                     </div>
                   </td>
-                  <td style={{ fontWeight: '500' }}>{row.achievement}</td>
+                  <td>{row.achievement}</td>
                   <td>
-                    <span className={`badge ${row.category.toLowerCase()}`}>
-                      {row.category}
-                    </span>
+                    <span className={`badge ${row.category.toLowerCase()}`}>{row.category}</span>
                   </td>
-                  <td style={{ color: '#64748B' }}>{row.department}</td>
-                  <td style={{ color: '#64748B' }}>{row.date}</td>
+                  <td>{row.department}</td>
+                  <td>{row.date}</td>
                   <td>
-                    <span style={{ 
-                      color: row.status === 'Approved' ? '#10B981' : '#F59E0B',
-                      fontWeight: '600',
-                      fontSize: '13px'
-                    }}>
-                      {row.status}
-                    </span>
-                  </td>
-                  <td>
-                    <div className="table-actions-cell">
-                      <button className="icon-btn" title="View">
-                        <Eye size={16} />
-                      </button>
-                      <button className="icon-btn" title="Edit">
-                        <Edit size={16} />
-                      </button>
-                      <button className="icon-btn" title="Delete">
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
+                    <span className={`status-pill ${row.status === 'Approved' ? 'verified' : 'pending'}`}>{row.status}</span>
                   </td>
                 </tr>
               ))}
@@ -239,38 +228,54 @@ function Reports() {
           </table>
         </div>
 
-        {/* Pagination */}
         <div className="pagination">
-          <div className="pagination-info">
-            Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredData.length)} of {filteredData.length} entries
-          </div>
+          <p className="pagination-info">
+            Showing {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filteredData.length)} of {filteredData.length}
+          </p>
           <div className="pagination-controls">
-            <button 
-              className="pagination-btn" 
-              onClick={() => setCurrentPage(p => p - 1)}
-              disabled={currentPage === 1}
-            >
+            <button className="pagination-btn" onClick={() => setCurrentPage((value) => value - 1)} disabled={currentPage === 1}>
               <ChevronLeft size={16} />
             </button>
-            {[...Array(totalPages)].map((_, i) => (
-              <button
-                key={i + 1}
-                className={`pagination-btn ${currentPage === i + 1 ? 'active' : ''}`}
-                onClick={() => setCurrentPage(i + 1)}
-              >
-                {i + 1}
+            {[...Array(totalPages)].map((_, index) => (
+              <button key={index + 1} className={`pagination-btn ${currentPage === index + 1 ? 'active' : ''}`} onClick={() => setCurrentPage(index + 1)}>
+                {index + 1}
               </button>
             ))}
-            <button 
-              className="pagination-btn"
-              onClick={() => setCurrentPage(p => p + 1)}
-              disabled={currentPage === totalPages}
-            >
+            <button className="pagination-btn" onClick={() => setCurrentPage((value) => value + 1)} disabled={currentPage === totalPages}>
               <ChevronRight size={16} />
             </button>
           </div>
         </div>
-      </div>
+      </section>
+
+      <section className="table-card" style={{ marginTop: '16px' }}>
+        <div className="table-header">
+          <h3 className="table-title">Category-Wise Report Division</h3>
+        </div>
+
+        <div className="category-report-grid">
+          {groupedCategoryRows.map((group) => (
+            <article className="category-report-card" key={group.category}>
+              <div className="category-report-head">
+                <span className={`badge ${group.category.toLowerCase()}`}>{group.category}</span>
+                <strong>{group.rows.length} records</strong>
+              </div>
+
+              <div className="category-report-list">
+                {group.rows.map((row) => (
+                  <div key={row.id} className="category-report-item">
+                    <div>
+                      <h4>{row.student}</h4>
+                      <p>{row.achievement}</p>
+                    </div>
+                    <span className={`status-pill ${row.status === 'Approved' ? 'verified' : 'pending'}`}>{row.status}</span>
+                  </div>
+                ))}
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
     </div>
   )
 }
