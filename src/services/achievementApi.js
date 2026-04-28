@@ -1,4 +1,6 @@
-const BASE_URL = "http://localhost:8081/api/achievements";
+import { apiUrl } from "../config/api";
+
+const BASE_URL = apiUrl("/api/achievements");
 
 export async function fetchAchievements() {
   const res = await fetch(BASE_URL);
