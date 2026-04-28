@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { BookOpen, PlusCircle, Search, Tags } from 'lucide-react'
+import { createCourse, fetchCourses } from '../services/courseApi'
 
 const COURSE_STORAGE_KEY = 'portal-courses'
 
@@ -12,6 +13,7 @@ const defaultCourses = [
 function AdminCourses() {
   const [courses, setCourses] = useState([])
   const [message, setMessage] = useState('')
+  const [loading, setLoading] = useState(false)
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('All')
   const [form, setForm] = useState({
@@ -21,40 +23,75 @@ function AdminCourses() {
   })
 
   useEffect(() => {
-    const savedCourses = localStorage.getItem(COURSE_STORAGE_KEY)
-    if (savedCourses) {
-      setCourses(JSON.parse(savedCourses))
-      return
+    let active = true
+
+    async function loadCourses() {
+      setLoading(true)
+      try {
+        const dbCourses = await fetchCourses()
+        if (active && dbCourses.length > 0) {
+          const mapped = dbCourses.map((course) => ({
+            id: course.id || Date.now(),
+            name: course.courseName || '',
+            category: 'Academic',
+            instructor: course.instructor || '',
+            status: 'Available',
+          }))
+          setCourses(mapped)
+          localStorage.setItem(COURSE_STORAGE_KEY, JSON.stringify(mapped))
+          return
+        }
+      } catch (error) {
+        console.warn('Backend not reachable, using local storage')
+      }
+
+      // Fallback to localStorage
+      const savedCourses = localStorage.getItem(COURSE_STORAGE_KEY)
+      if (active) {
+        setCourses(savedCourses ? JSON.parse(savedCourses) : defaultCourses)
+        if (!savedCourses) {
+          localStorage.setItem(COURSE_STORAGE_KEY, JSON.stringify(defaultCourses))
+        }
+        setLoading(false)
+      }
     }
 
-    setCourses(defaultCourses)
-    localStorage.setItem(COURSE_STORAGE_KEY, JSON.stringify(defaultCourses))
+    loadCourses()
+
+    return () => {
+      active = false
+    }
   }, [])
 
-  const persistCourses = (nextCourses) => {
-    setCourses(nextCourses)
-    localStorage.setItem(COURSE_STORAGE_KEY, JSON.stringify(nextCourses))
-  }
-
-  const addCourse = (event) => {
+const addCourse = async (event) => {
     event.preventDefault()
     if (!form.name.trim() || !form.instructor.trim()) {
       setMessage('Please enter course name and instructor.')
       return
     }
 
-    const newCourse = {
-      id: Date.now(),
-      name: form.name.trim(),
-      category: form.category,
-      instructor: form.instructor.trim(),
-      status: 'Available',
-    }
+    try {
+      const saved = await createCourse(form)
 
-    const updated = [newCourse, ...courses]
-    persistCourses(updated)
-    setForm({ name: '', category: 'Academic', instructor: '' })
-    setMessage('Course added successfully. Students can view it now.')
+      const newCourse = {
+        id: saved.id || Date.now(),
+        name: form.name.trim(),
+        category: form.category,
+        instructor: form.instructor.trim(),
+        status: 'Available',
+      }
+
+      const updated = [newCourse, ...courses]
+      setCourses(updated)
+      localStorage.setItem(COURSE_STORAGE_KEY, JSON.stringify(updated))
+
+      setForm({ name: '', category: 'Academic', instructor: '' })
+      setMessage('✅ Course added successfully and saved to database.')
+      setTimeout(() => setMessage(''), 3000)
+    } catch (error) {
+      setMessage(`❌ Failed to add course: ${error.message}`)
+      setTimeout(() => setMessage(''), 3000)
+    }
   }
 
   const categoryCount = useMemo(() => new Set(courses.map((course) => course.category)).size, [courses])

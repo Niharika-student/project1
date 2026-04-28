@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ShieldCheck, LayoutDashboard, Users, ClipboardCheck } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 function AdminLogin() {
@@ -67,6 +67,10 @@ function AdminLogin() {
           {error && <p className="login-error">{error}</p>}
 
           <button className="btn btn-primary" type="submit">Login</button>
+
+          <p style={{ margin: 0, fontSize: '0.95rem', color: '#64748B' }}>
+            Need a new admin account? <Link to="/admin/signup">Signup here</Link>
+          </p>
         </form>
       </div>
     </div>

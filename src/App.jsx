@@ -17,6 +17,7 @@ import StudentShowcase from './student/StudentShowcase'
 import AdminLogin from './pages/AdminLogin'
 import Home from './pages/Home'
 import PageNotFound from './pages/PageNotFound'
+import Signup from './pages/Signup'
 import StudentLogin from './pages/StudentLogin'
 import StudentRegistration from './pages/StudentRegistration'
 import TeacherLogin from './pages/TeacherLogin'
@@ -40,6 +41,7 @@ function App() {
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/admin/login" element={<AdminLogin />} />
+      <Route path="/admin/signup" element={<Signup />} />
       <Route path="/student/login" element={<StudentLogin />} />
       <Route path="/teacher/login" element={<TeacherLogin />} />
       <Route path="/student/register" element={<StudentRegistration />} />
@@ -60,6 +62,7 @@ function App() {
         <Route path="teachers" element={<AdminTeacherDirectory />} />
         <Route path="approvals" element={<AdminStudentApprovals />} />
         <Route path="add-teacher" element={<AddTeacherForm />} />
+        
       </Route>
 
       <Route

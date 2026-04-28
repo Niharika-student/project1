@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { BadgeCheck, Sparkles, TrendingUp, User, Users } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 function Home() {
@@ -95,6 +95,12 @@ function Home() {
           <button className="portal-submit" type="submit">
             Sign In as {role === 'student' ? 'Student' : 'Admin'}
           </button>
+
+          {role === 'admin' && (
+            <p style={{ margin: 0, fontSize: '0.95rem', color: '#64748B', textAlign: 'center' }}>
+              New admin account? <Link to="/admin/signup">Create it here</Link>
+            </p>
+          )}
         </form>
       </section>
     </main>
